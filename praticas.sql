@@ -123,7 +123,8 @@ select	year(curdate()) ano_atual; -- ano atual
 select	c.nome,
 		c.email,
 		p.data_pedido,
-        p.valor_total
+        p.valor_total,
+        percent_rank() over(order by p.valor_total desc) percentil
 from	pedidos p
 join	clientes c
 on		c.id_cliente = p.id_cliente
@@ -143,3 +144,48 @@ on		ci.CountryCode = c.code
 where	c.name = 'Brazil'
 order	by ci.Population desc
 limit	5;
+
+select	row_number() over(order by count(name) desc) id,
+		continent,
+		count(name) qtd_continente
+from	country
+group	by continent
+order	by qtd_continente desc;
+
+select	name 		cidade,
+		District 	estado,
+        CountryCode sigla_pais,
+		Population 	populacao
+from	city
+where	population = (select max(population) from city);
+
+with cidades_brasileiras as (
+	select	name 		cidade,
+			District 	estado,
+			CountryCode sigla,
+            Population 	populacao
+	from	city
+	where	CountryCode = 'BRA'
+)
+
+select	row_number() over(order by populacao desc) id,
+		cidade,
+        estado,
+        case
+			when estado in ('São Paulo', 'Minas Gerais', 'Rio de Janeiro', 'Espírito Santo')
+				then 'Sudeste'
+			when estado in ('Rio Grande do Sul', 'Santa Catarina', 'Paraná')
+				then 'Sul'
+			when estado in ('Pernambuco', 'Alagoas', 'Sergipe', 'Bahia', 'Ceará', 'Maranhão', 'Piauí', 'Rio Grande do Norte', 'Paraíba')
+				then 'Nordeste'
+			when estado in ('Amazonas', 'Rondônia', 'Roraima', 'Amapá', 'Acre', 'Tocantins', 'Pará')
+				then 'Norte'
+			when estado in ('Mato Grosso', 'Mato Grosso do Sul', 'Goiás', 'Distrito Federal')
+				then 'Centro Oeste'
+			else null
+		end regiao,
+        sigla,
+        populacao
+from	cidades_brasileiras
+where	estado = 'Minas Gerais';
+-- and		right(cidade, 2) = 'ra';
